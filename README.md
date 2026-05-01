@@ -1,58 +1,171 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CyberAgora — Dynamic Approval Workflow
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 13 + Vue 3 SPA implementation of a dynamic approval-workflow system. Admins build forms with arbitrary fields and configure per-form approval workflows; requesters submit filled forms; approvers act on items routed to them.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend:** Laravel 13, MySQL, Sanctum (token auth), Redis (predis driver, cache decorator pattern).
+- **Frontend:** Vue 3 + Vue Router 4 + Pinia + Axios + Tailwind 4, served as an SPA from a single Blade shell.
+- **Architecture:** SOLID, layered — `Domain/Contracts` interfaces, `Repositories` Eloquent implementations, `Decorators` for caching, `Services` for orchestration, `Strategy` pattern for approval processors, FormRequests for input validation, API Resources for output.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Prerequisites
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3+, Composer
+- MySQL 8 (XAMPP/MAMP fine)
+- Redis (running locally on 6379)
+- Node 20+
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Quickstart
 
 ```bash
-composer require laravel/boost --dev
+# 1. Install backend deps
+composer install
 
-php artisan boost:install
+# 2. Install frontend deps
+npm install
+
+# 3. Bootstrap env
+cp .env.example .env
+php artisan key:generate
+# edit DB_DATABASE / DB_USERNAME / DB_PASSWORD in .env if needed
+# create the database first:  mysql -u root -e "CREATE DATABASE cyberagora"
+
+# 4. Migrate + seed (creates demo users + 2 demo forms)
+php artisan migrate:fresh --seed
+
+# 5. Build the SPA (or `npm run dev` for HMR)
+npm run build
+
+# 6. Serve
+php artisan serve
+# → http://127.0.0.1:8000
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Demo accounts
 
-## Contributing
+All passwords: `password`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Role      | Email                       |
+| --------- | --------------------------- |
+| Admin     | `admin@cyberagora.test`     |
+| Requester | `alice@cyberagora.test`     |
+| Requester | `bob@cyberagora.test`       |
+| Approver  | `carol@cyberagora.test`     |
+| Approver  | `dave@cyberagora.test`      |
+| Approver  | `erin@cyberagora.test`      |
 
-## Code of Conduct
+## Demo flows
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The seeder creates two forms exercising both workflow types:
 
-## Security Vulnerabilities
+1. **Expense Reimbursement** (sequential, 2-step) — Carol → Dave.
+2. **PTO Request** (threshold, 2-of-3) — pool of Carol/Dave/Erin, any 2 approvals → approved.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Try in the browser:
+1. Sign in as **alice**, submit an expense, see it pending in **My Requests**.
+2. Sign in as **carol**, see it in **Pending Approvals**, approve.
+3. Sign in as **dave**, approve again — status flips to `approved`.
+4. Sign in as **alice**, submit a PTO; sign in as any 2 of carol/dave/erin to approve.
+5. Any single rejection at any point → request becomes `rejected`.
+6. Sign in as **admin** → **Manage Forms** → build a new form + workflow inline.
+
+## API surface
+
+```
+POST   /api/auth/register
+POST   /api/auth/login
+POST   /api/auth/logout                    (auth)
+GET    /api/auth/me                        (auth)
+
+GET    /api/forms                          (auth)         — active forms (cached, redis)
+GET    /api/forms/{id}                     (auth)         — form + schema
+POST   /api/forms/{form}/requests          (auth)         — submit a filled form
+GET    /api/my/requests                    (auth)         — submission history
+GET    /api/my/requests/{request}          (auth)         — single request + action trail
+
+# admin
+GET    /api/admin/forms                    (admin)
+POST   /api/admin/forms                    (admin)
+PUT    /api/admin/forms/{form}             (admin)
+DELETE /api/admin/forms/{form}             (admin)
+GET    /api/admin/forms/{form}/workflow    (admin)
+POST   /api/admin/forms/{form}/workflow    (admin)
+GET    /api/admin/users?role=approver      (admin)
+
+# approver
+GET    /api/approvals/pending              (approver)
+GET    /api/approvals/past                 (approver)
+GET    /api/approvals/{request}            (approver)
+POST   /api/approvals/{request}/approve    (approver)
+POST   /api/approvals/{request}/reject     (approver)
+```
+
+## Domain model
+
+Three normalised tables drive the workflow:
+
+- `approval_requests` — the **state machine** (one row per submission). Tracks `status` (pending/approved/rejected/cancelled) and `current_step_order` (sequential workflows).
+- `approval_request_values` — the **submitted form payload, normalised**. One row per filled field, with **typed columns** (`value_string` / `value_number` / `value_date` / `value_boolean` / `file_path`) — only the column matching the field's type is populated. Indexable, queryable, type-safe — no JSON blobs.
+- `approval_actions` — the **append-only audit log** of every approve/reject decision. Drives the state-machine transitions.
+
+Workflow types:
+- **Sequential**: ordered list of approvers; `current_step_order` advances on approve, the request becomes `approved` after the last step. Any reject → `rejected` immediately.
+- **Threshold**: pool of approvers; once N (`required_approvals`) approves are recorded → `approved`. Any reject → `rejected`.
+
+[`SequentialApprovalProcessor`](app/Services/Approval/SequentialApprovalProcessor.php) and [`ThresholdApprovalProcessor`](app/Services/Approval/ThresholdApprovalProcessor.php) are interchangeable strategies behind [`ApprovalProcessorInterface`](app/Domain/Contracts/ApprovalProcessorInterface.php); [`ApprovalProcessorFactory`](app/Services/Approval/ApprovalProcessorFactory.php) picks the right one per request.
+
+## SOLID notes
+
+- **S** — every service / processor / repository owns a single responsibility.
+- **O** — [`CachedFormRepository`](app/Repositories/Decorators/CachedFormRepository.php) wraps the Eloquent repo via decorator. New workflow types plug in as new processors implementing [`ApprovalProcessorInterface`](app/Domain/Contracts/ApprovalProcessorInterface.php) without touching existing code.
+- **L** — every `*Repository` and every `ApprovalProcessor` is freely substitutable behind its interface.
+- **I** — narrow interfaces (e.g. [`DynamicFieldValidatorInterface`](app/Domain/Contracts/DynamicFieldValidatorInterface.php) exposes a single `validate()` method).
+- **D** — controllers and services depend on interfaces; bindings live in [`AppServiceProvider`](app/Providers/AppServiceProvider.php).
+
+## Caching
+
+`forms:active:list` and `forms:show:{id}` are cached in Redis (DB 1) with 10-minute TTL via [`CachedFormRepository`](app/Repositories/Decorators/CachedFormRepository.php). Any write (`create`, `update`, `delete`) busts both keys for the affected form. Verify locally:
+
+```bash
+redis-cli -n 1 --scan --pattern "*forms*"
+```
+
+## Project layout
+
+```
+app/
+├── Domain/
+│   ├── Contracts/    # interfaces (DIP)
+│   ├── DTOs/
+│   └── Enums/
+├── Repositories/
+│   ├── Eloquent*Repository.php
+│   └── Decorators/CachedFormRepository.php
+├── Services/
+│   ├── *Service.php
+│   └── Approval/
+│       ├── SequentialApprovalProcessor.php
+│       ├── ThresholdApprovalProcessor.php
+│       └── ApprovalProcessorFactory.php
+├── Validation/DynamicFieldValidator.php
+├── Persistence/RequestValueWriter.php
+└── Http/
+    ├── Controllers/Api/
+    ├── Requests/
+    ├── Resources/
+    └── Middleware/EnsureRole.php
+
+resources/js/
+├── app.js, App.vue, router.js
+├── api/client.js
+├── stores/{auth,ui}.js
+├── components/{DynamicForm,FieldRenderer,StatusBadge}.vue
+└── views/{Login,Register,Dashboard,RequestDetail}.vue
+    ├── admin/{FormsIndex,FormEditor}.vue
+    ├── user/{AvailableForms,SubmitRequest,MyRequests}.vue
+    └── approver/{PendingApprovals,PastApprovals}.vue
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT.
