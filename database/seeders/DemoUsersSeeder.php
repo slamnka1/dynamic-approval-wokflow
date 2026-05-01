@@ -19,7 +19,7 @@ class DemoUsersSeeder extends Seeder
             ],
         );
 
-        foreach (['alice', 'bob'] as $name) {
+        foreach (['ali', 'rahim'] as $name) {
             User::updateOrCreate(
                 ['email' => "{$name}@cyberagora.test"],
                 [
@@ -30,7 +30,7 @@ class DemoUsersSeeder extends Seeder
             );
         }
 
-        foreach (['carol', 'dave', 'erin'] as $name) {
+        foreach (['omar', 'sarra', 'salma'] as $name) {
             User::updateOrCreate(
                 ['email' => "{$name}@cyberagora.test"],
                 [

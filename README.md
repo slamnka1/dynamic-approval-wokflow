@@ -48,24 +48,24 @@ All passwords: `password`
 | Role      | Email                       |
 | --------- | --------------------------- |
 | Admin     | `admin@cyberagora.test`     |
-| Requester | `alice@cyberagora.test`     |
-| Requester | `bob@cyberagora.test`       |
-| Approver  | `carol@cyberagora.test`     |
-| Approver  | `dave@cyberagora.test`      |
-| Approver  | `erin@cyberagora.test`      |
+| Requester | `ali@cyberagora.test`       |
+| Requester | `rahim@cyberagora.test`     |
+| Approver  | `omar@cyberagora.test`      |
+| Approver  | `sarra@cyberagora.test`     |
+| Approver  | `salma@cyberagora.test`     |
 
 ## Demo flows
 
 The seeder creates two forms exercising both workflow types:
 
-1. **Expense Reimbursement** (sequential, 2-step) — Carol → Dave.
-2. **PTO Request** (threshold, 2-of-3) — pool of Carol/Dave/Erin, any 2 approvals → approved.
+1. **Expense Reimbursement** (sequential, 2-step) — Omar → Sarra.
+2. **PTO Request** (threshold, 2-of-3) — pool of Omar/Sarra/Salma, any 2 approvals → approved.
 
 Try in the browser:
-1. Sign in as **alice**, submit an expense, see it pending in **My Requests**.
-2. Sign in as **carol**, see it in **Pending Approvals**, approve.
-3. Sign in as **dave**, approve again — status flips to `approved`.
-4. Sign in as **alice**, submit a PTO; sign in as any 2 of carol/dave/erin to approve.
+1. Sign in as **ali**, submit an expense, see it pending in **My Requests**.
+2. Sign in as **omar**, see it in **Pending Approvals**, approve.
+3. Sign in as **sarra**, approve again — status flips to `approved`.
+4. Sign in as **ali**, submit a PTO; sign in as any 2 of omar/sarra/salma to approve.
 5. Any single rejection at any point → request becomes `rejected`.
 6. Sign in as **admin** → **Manage Forms** → build a new form + workflow inline.
 

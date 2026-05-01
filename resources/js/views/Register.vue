@@ -18,6 +18,12 @@ const form = ref({
 const errors = ref({});
 const submitting = ref(false);
 
+const roles = [
+    { value: 'requester', label: 'Requester', desc: 'Submit requests against forms.' },
+    { value: 'approver',  label: 'Approver',  desc: 'Review and decide on requests.' },
+    { value: 'admin',     label: 'Admin',     desc: 'Build forms and configure flows.' },
+];
+
 const submit = async () => {
     submitting.value = true;
     errors.value = {};
@@ -35,36 +41,70 @@ const submit = async () => {
 </script>
 
 <template>
-    <div class="min-h-screen flex items-center justify-center bg-slate-50">
-        <form @submit.prevent="submit" class="w-full max-w-sm bg-white rounded-lg shadow-sm p-6 space-y-4 border border-slate-200">
-            <h1 class="text-xl font-bold">Create account</h1>
-
-            <div v-for="(field, key) in { name: 'Name', email: 'Email', password: 'Password', password_confirmation: 'Confirm password' }" :key="key">
-                <label class="text-sm text-slate-700">{{ field }}</label>
-                <input
-                    v-model="form[key]"
-                    :type="key.includes('password') ? 'password' : (key === 'email' ? 'email' : 'text')"
-                    required
-                    class="w-full mt-1 border rounded-md px-3 py-2 border-slate-300 focus:border-indigo-500"
-                />
-                <p v-if="errors[key]" class="text-xs text-rose-600">{{ errors[key][0] }}</p>
+    <div class="min-h-screen flex items-center justify-center p-4 sm:p-8">
+        <div class="w-full max-w-xl">
+            <div class="flex items-center justify-center gap-2 mb-6">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center shadow-sm">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                </div>
+                <span class="font-bold text-lg text-ink-900">CyberAgora</span>
             </div>
 
-            <div>
-                <label class="text-sm text-slate-700">Role</label>
-                <select v-model="form.role" class="w-full mt-1 border rounded-md px-3 py-2 border-slate-300 bg-white">
-                    <option value="requester">Requester</option>
-                    <option value="approver">Approver</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
+            <form @submit.prevent="submit" class="card p-6 sm:p-8 space-y-5 animate-fade-in-up">
+                <div>
+                    <h1 class="text-xl font-bold text-ink-900">Create your account</h1>
+                    <p class="text-sm muted mt-1">Pick a role and you're in.</p>
+                </div>
 
-            <button :disabled="submitting" class="w-full bg-indigo-600 text-white rounded-md py-2 hover:bg-indigo-700">
-                {{ submitting ? 'Creating…' : 'Create account' }}
-            </button>
-            <p class="text-xs text-center text-slate-500">
-                Already have one? <router-link :to="{ name: 'login' }" class="text-indigo-600">Sign in</router-link>
-            </p>
-        </form>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="label">Full name</label>
+                        <input v-model="form.name" required class="input" placeholder="Jane Doe" />
+                        <p v-if="errors.name" class="text-xs text-rose-600 mt-1">{{ errors.name[0] }}</p>
+                    </div>
+                    <div>
+                        <label class="label">Email</label>
+                        <input v-model="form.email" type="email" required class="input" placeholder="jane@company.com" />
+                        <p v-if="errors.email" class="text-xs text-rose-600 mt-1">{{ errors.email[0] }}</p>
+                    </div>
+                    <div>
+                        <label class="label">Password</label>
+                        <input v-model="form.password" type="password" required class="input" placeholder="At least 8 characters" />
+                        <p v-if="errors.password" class="text-xs text-rose-600 mt-1">{{ errors.password[0] }}</p>
+                    </div>
+                    <div>
+                        <label class="label">Confirm password</label>
+                        <input v-model="form.password_confirmation" type="password" required class="input" placeholder="Repeat password" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="label">Role</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <label
+                            v-for="r in roles" :key="r.value"
+                            class="cursor-pointer rounded-xl border p-3 transition"
+                            :class="form.role === r.value ? 'border-brand-500 bg-brand-50/60 ring-1 ring-brand-500/30' : 'border-ink-200 hover:border-ink-300'"
+                        >
+                            <input type="radio" v-model="form.role" :value="r.value" class="sr-only" />
+                            <div class="flex items-center gap-2">
+                                <span class="h-2 w-2 rounded-full" :class="form.role === r.value ? 'bg-brand-500' : 'bg-ink-300'"></span>
+                                <span class="font-medium text-sm text-ink-900">{{ r.label }}</span>
+                            </div>
+                            <p class="text-xs muted mt-1">{{ r.desc }}</p>
+                        </label>
+                    </div>
+                </div>
+
+                <button :disabled="submitting" class="btn-primary w-full py-2.5">
+                    <svg v-if="submitting" viewBox="0 0 24 24" class="h-4 w-4 animate-spin" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                    {{ submitting ? 'Creating…' : 'Create account' }}
+                </button>
+
+                <p class="text-xs muted text-center">
+                    Already have an account? <router-link :to="{ name: 'login' }" class="text-brand-600 hover:underline font-medium">Sign in</router-link>
+                </p>
+            </form>
+        </div>
     </div>
 </template>
