@@ -69,6 +69,14 @@ Try in the browser:
 5. Any single rejection at any point → request becomes `rejected`.
 6. Sign in as **admin** → **Manage Forms** → build a new form + workflow inline.
 
+## API documentation
+
+Full OpenAPI 3.1 spec + Postman collection live in [`/docs`](docs/):
+
+- **Swagger UI** — start the server, visit [`http://127.0.0.1:8000/docs`](http://127.0.0.1:8000/docs).
+- **OpenAPI JSON** — [`docs/openapi.json`](docs/openapi.json) (also served at `/docs/openapi.json`).
+- **Postman / Insomnia** — import [`docs/postman_collection.json`](docs/postman_collection.json) (also served at `/docs/postman_collection.json`). The `Login` request auto-saves the token to `{{token}}`.
+
 ## API surface
 
 ```

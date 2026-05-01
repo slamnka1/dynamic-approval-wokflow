@@ -1,0 +1,309 @@
+{
+  "info": {
+    "_postman_id": "8a4c2bf6-9c3e-4a7e-8e6e-cyberagora-001",
+    "name": "CyberAgora — Dynamic Approval Workflow",
+    "description": "End-to-end collection for the dynamic-approval API. Login first to populate {{token}} (the Login request has a test script that does this automatically). Then run the rest in any order.\n\n**Demo accounts** (all `password`):\n- admin@cyberagora.test (admin)\n- alice@cyberagora.test, bob@cyberagora.test (requesters)\n- carol@cyberagora.test, dave@cyberagora.test, erin@cyberagora.test (approvers)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+    { "key": "token", "value": "" },
+    { "key": "form_id", "value": "1" },
+    { "key": "request_id", "value": "1" },
+    { "key": "approver_id_1", "value": "4" },
+    { "key": "approver_id_2", "value": "5" },
+    { "key": "approver_id_3", "value": "6" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"new@cyberagora.test\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"role\": \"requester\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (saves token to env)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.environment.set('token', json.token);",
+                  "    console.log('token saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@cyberagora.test\",\n  \"password\": \"password\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Forms (public)",
+      "item": [
+        {
+          "name": "List active forms",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/forms", "host": ["{{base_url}}"], "path": ["forms"] }
+          }
+        },
+        {
+          "name": "Show form",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/forms/{{form_id}}", "host": ["{{base_url}}"], "path": ["forms", "{{form_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Requester",
+      "item": [
+        {
+          "name": "Submit a filled form (sequential expense)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('request_id', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/forms/{{form_id}}/requests", "host": ["{{base_url}}"], "path": ["forms", "{{form_id}}", "requests"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": {\n    \"title\": \"NYC trip\",\n    \"amount\": 850,\n    \"category\": \"travel\",\n    \"incurred_on\": \"2026-04-12\",\n    \"reimbursable\": true,\n    \"notes\": \"3 nights\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "My requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/my/requests", "host": ["{{base_url}}"], "path": ["my", "requests"] }
+          }
+        },
+        {
+          "name": "My request detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/my/requests/{{request_id}}", "host": ["{{base_url}}"], "path": ["my", "requests", "{{request_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Approver",
+      "item": [
+        {
+          "name": "Pending approvals",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/approvals/pending", "host": ["{{base_url}}"], "path": ["approvals", "pending"] }
+          }
+        },
+        {
+          "name": "Past approvals",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/approvals/past", "host": ["{{base_url}}"], "path": ["approvals", "past"] }
+          }
+        },
+        {
+          "name": "Show request",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/approvals/{{request_id}}", "host": ["{{base_url}}"], "path": ["approvals", "{{request_id}}"] }
+          }
+        },
+        {
+          "name": "Approve",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/approvals/{{request_id}}/approve", "host": ["{{base_url}}"], "path": ["approvals", "{{request_id}}", "approve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Looks good\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reject",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/approvals/{{request_id}}/reject", "host": ["{{base_url}}"], "path": ["approvals", "{{request_id}}", "reject"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Out of policy\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "List all forms",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/admin/forms", "host": ["{{base_url}}"], "path": ["admin", "forms"] }
+          }
+        },
+        {
+          "name": "Create form (Expense)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) pm.collectionVariables.set('form_id', json.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/admin/forms", "host": ["{{base_url}}"], "path": ["admin", "forms"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Expense Reimbursement\",\n  \"description\": \"Submit a business expense.\",\n  \"is_active\": true,\n  \"fields\": [\n    { \"key\": \"title\", \"label\": \"Title\", \"type\": \"text\", \"is_required\": true },\n    { \"key\": \"amount\", \"label\": \"Amount\", \"type\": \"number\", \"is_required\": true, \"min_value\": 1, \"max_value\": 10000 },\n    {\n      \"key\": \"category\", \"label\": \"Category\", \"type\": \"select\", \"is_required\": true,\n      \"options\": [\n        { \"value\": \"travel\", \"label\": \"Travel\" },\n        { \"value\": \"meals\",  \"label\": \"Meals\" },\n        { \"value\": \"software\", \"label\": \"Software\" }\n      ]\n    },\n    { \"key\": \"incurred_on\", \"label\": \"Date incurred\", \"type\": \"date\", \"is_required\": true },\n    { \"key\": \"notes\", \"label\": \"Notes\", \"type\": \"textarea\" }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Update form",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/admin/forms/{{form_id}}", "host": ["{{base_url}}"], "path": ["admin", "forms", "{{form_id}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Expense Reimbursement v2\",\n  \"is_active\": true,\n  \"fields\": [\n    { \"key\": \"title\", \"label\": \"Title\", \"type\": \"text\", \"is_required\": true }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete form",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/admin/forms/{{form_id}}", "host": ["{{base_url}}"], "path": ["admin", "forms", "{{form_id}}"] }
+          }
+        },
+        {
+          "name": "Show form workflow",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/admin/forms/{{form_id}}/workflow", "host": ["{{base_url}}"], "path": ["admin", "forms", "{{form_id}}", "workflow"] }
+          }
+        },
+        {
+          "name": "Configure workflow (sequential)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/admin/forms/{{form_id}}/workflow", "host": ["{{base_url}}"], "path": ["admin", "forms", "{{form_id}}", "workflow"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Two-step manager approval\",\n  \"type\": \"sequential\",\n  \"steps\": [\n    { \"approver_id\": {{approver_id_1}} },\n    { \"approver_id\": {{approver_id_2}} }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Configure workflow (threshold 2-of-3)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/admin/forms/{{form_id}}/workflow", "host": ["{{base_url}}"], "path": ["admin", "forms", "{{form_id}}", "workflow"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Two-of-three leads\",\n  \"type\": \"threshold\",\n  \"required_approvals\": 2,\n  \"steps\": [\n    { \"approver_id\": {{approver_id_1}} },\n    { \"approver_id\": {{approver_id_2}} },\n    { \"approver_id\": {{approver_id_3}} }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "List approvers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/admin/users?role=approver",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"],
+              "query": [{ "key": "role", "value": "approver" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
