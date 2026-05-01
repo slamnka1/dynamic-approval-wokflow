@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FormController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WorkflowController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -10,5 +13,22 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('forms', [FormController::class, 'index']);
+    Route::get('forms/{id}', [FormController::class, 'show']);
+
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('users', [UserController::class, 'index']);
+
+        Route::get('forms', [FormController::class, 'adminIndex']);
+        Route::post('forms', [FormController::class, 'store']);
+        Route::put('forms/{form}', [FormController::class, 'update']);
+        Route::delete('forms/{form}', [FormController::class, 'destroy']);
+
+        Route::get('forms/{form}/workflow', [WorkflowController::class, 'show']);
+        Route::post('forms/{form}/workflow', [WorkflowController::class, 'configure']);
     });
 });
