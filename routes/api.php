@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\ApprovalController;
+use App\Http\Controllers\Api\ApprovalRequestController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FormController;
 use App\Http\Controllers\Api\UserController;
@@ -19,6 +21,17 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('forms', [FormController::class, 'index']);
     Route::get('forms/{id}', [FormController::class, 'show']);
+
+    Route::post('forms/{form}/requests', [ApprovalRequestController::class, 'store']);
+    Route::get('my/requests', [ApprovalRequestController::class, 'index']);
+    Route::get('my/requests/{approvalRequest}', [ApprovalRequestController::class, 'show']);
+
+    Route::middleware('role:approver')->prefix('approvals')->group(function () {
+        Route::get('pending', [ApprovalController::class, 'pending']);
+        Route::get('past', [ApprovalController::class, 'past']);
+        Route::post('{approvalRequest}/approve', [ApprovalController::class, 'approve']);
+        Route::post('{approvalRequest}/reject', [ApprovalController::class, 'reject']);
+    });
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('users', [UserController::class, 'index']);
