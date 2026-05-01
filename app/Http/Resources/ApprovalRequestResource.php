@@ -26,6 +26,19 @@ class ApprovalRequestResource extends JsonResource
                 'id' => $this->workflow->id,
                 'name' => $this->workflow->name,
                 'type' => $this->workflow->type->value,
+                'required_approvals' => $this->workflow->required_approvals,
+                'steps' => $this->workflow->relationLoaded('steps')
+                    ? $this->workflow->steps->map(fn ($s) => [
+                        'id' => $s->id,
+                        'step_order' => $s->step_order,
+                        'approver_id' => $s->approver_id,
+                        'approver' => $s->relationLoaded('approver') && $s->approver ? [
+                            'id' => $s->approver->id,
+                            'name' => $s->approver->name,
+                            'email' => $s->approver->email,
+                        ] : null,
+                    ])->all()
+                    : [],
             ]),
             'values' => ApprovalRequestValueResource::collection($this->whenLoaded('values')),
             'actions' => ApprovalActionResource::collection($this->whenLoaded('actions')),

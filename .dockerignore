@@ -1,0 +1,46 @@
+.git
+.gitignore
+.github
+.idea
+.vscode
+.fleet
+.nova
+.zed
+.DS_Store
+
+# Build artefacts (regenerated in stages)
+node_modules
+vendor
+public/build
+public/hot
+
+# Env / secrets — image uses .env.example
+.env
+.env.backup
+.env.production
+
+# Storage runtime data
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+!storage/**/.gitignore
+
+# PHP / test cache
+.phpunit.cache
+.phpunit.result.cache
+
+# Tooling
+Dockerfile
+.dockerignore
+
+# Claude / agent artefacts
+.claude
+CLAUDE.md
+memory
+.mcp.json
+
+# Docs not required at runtime
+*.md
+!README.md

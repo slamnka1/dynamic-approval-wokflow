@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Domain\Contracts\ApprovalRequestRepositoryInterface;
 use App\Domain\Contracts\DynamicFieldValidatorInterface;
 use App\Domain\DTOs\SubmitRequestDTO;
+use App\Domain\Enums\RequestStatus;
 use App\Models\ApprovalRequest;
 use App\Models\Form;
 use App\Models\User;
@@ -27,6 +28,17 @@ class ApprovalRequestService
         $form->loadMissing('workflow.steps');
         if (! $form->workflow || $form->workflow->steps->isEmpty()) {
             throw ValidationException::withMessages(['form' => ['This form has no approval workflow configured.']]);
+        }
+
+        $hasPending = ApprovalRequest::where('form_id', $form->id)
+            ->where('requester_id', $requester->id)
+            ->where('status', RequestStatus::Pending)
+            ->exists();
+
+        if ($hasPending) {
+            throw ValidationException::withMessages([
+                'form' => ['You already have a pending request for this form. Wait for it to be decided before submitting again.'],
+            ]);
         }
 
         $validated = $this->validator->validate($form, $data, $files);

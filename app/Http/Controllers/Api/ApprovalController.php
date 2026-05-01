@@ -8,6 +8,7 @@ use App\Http\Requests\ApprovalActionRequest;
 use App\Http\Resources\ApprovalRequestResource;
 use App\Models\ApprovalRequest;
 use App\Services\ApprovalService;
+use App\Support\RequestAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,13 +34,7 @@ class ApprovalController extends Controller
 
     public function show(Request $request, ApprovalRequest $approvalRequest): JsonResponse
     {
-        $user = $request->user();
-        $approvalRequest->loadMissing(['workflow.steps', 'actions']);
-
-        $inWorkflow = $approvalRequest->workflow?->steps->contains('approver_id', $user->id);
-        $hasActed = $approvalRequest->actions->contains('approver_id', $user->id);
-
-        if (! $inWorkflow && ! $hasActed) {
+        if (! RequestAccess::canView($request->user(), $approvalRequest)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
@@ -62,7 +57,13 @@ class ApprovalController extends Controller
             ApprovalActionDTO::approve($request->input('comment')),
         );
 
-        return response()->json(['data' => new ApprovalRequestResource($updated->load(['actions.approver']))]);
+        return response()->json(['data' => new ApprovalRequestResource($updated->load([
+            'form.fields.options',
+            'workflow.steps.approver',
+            'values.field',
+            'actions.approver',
+            'requester',
+        ]))]);
     }
 
     public function reject(ApprovalActionRequest $request, ApprovalRequest $approvalRequest): JsonResponse
@@ -73,6 +74,12 @@ class ApprovalController extends Controller
             ApprovalActionDTO::reject($request->input('comment')),
         );
 
-        return response()->json(['data' => new ApprovalRequestResource($updated->load(['actions.approver']))]);
+        return response()->json(['data' => new ApprovalRequestResource($updated->load([
+            'form.fields.options',
+            'workflow.steps.approver',
+            'values.field',
+            'actions.approver',
+            'requester',
+        ]))]);
     }
 }

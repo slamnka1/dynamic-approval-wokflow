@@ -70,7 +70,8 @@ class DynamicFieldValidator implements DynamicFieldValidatorInterface
 
             case FieldType::File:
                 $rules[] = 'file';
-                $rules[] = 'max:5120';
+                $rules[] = 'mimes:jpg,jpeg,png,gif,webp,svg,bmp,csv,txt,xlsx,xls,pdf';
+                $rules[] = 'max:10240';
                 break;
         }
 

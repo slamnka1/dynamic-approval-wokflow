@@ -8,6 +8,7 @@ use App\Http\Resources\ApprovalRequestResource;
 use App\Models\ApprovalRequest;
 use App\Models\Form;
 use App\Services\ApprovalRequestService;
+use App\Support\RequestAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -38,7 +39,7 @@ class ApprovalRequestController extends Controller
 
     public function show(Request $request, ApprovalRequest $approvalRequest): JsonResponse
     {
-        if ($approvalRequest->requester_id !== $request->user()->id) {
+        if (! RequestAccess::canView($request->user(), $approvalRequest)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 

@@ -3,18 +3,19 @@ import { computed } from 'vue';
 
 const props = defineProps({ status: { type: String, required: true } });
 
-const palette = {
-    pending: 'bg-amber-100 text-amber-800 ring-amber-200',
-    approved: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
-    rejected: 'bg-rose-100 text-rose-800 ring-rose-200',
-    cancelled: 'bg-slate-100 text-slate-700 ring-slate-200',
+const config = {
+    pending:   { cls: 'bg-amber-50 text-amber-700 ring-amber-200',   dot: 'bg-amber-500' },
+    approved:  { cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },
+    rejected:  { cls: 'bg-rose-50 text-rose-700 ring-rose-200',     dot: 'bg-rose-500' },
+    cancelled: { cls: 'bg-ink-100 text-ink-700 ring-ink-200',       dot: 'bg-ink-400' },
 };
 
-const cls = computed(() => palette[props.status] || palette.cancelled);
+const c = computed(() => config[props.status] || config.cancelled);
 </script>
 
 <template>
-    <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1', cls]">
+    <span :class="['inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 capitalize', c.cls]">
+        <span :class="['h-1.5 w-1.5 rounded-full', c.dot]"></span>
         {{ status }}
     </span>
 </template>

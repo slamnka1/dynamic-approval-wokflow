@@ -8,7 +8,7 @@ defineEmits(['update:modelValue']);
 
 <template>
     <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
+        <label class="flex items-center gap-1 text-sm font-medium text-ink-800 mb-1.5">
             {{ field.label }}
             <span v-if="field.is_required" class="text-rose-500">*</span>
         </label>
@@ -19,7 +19,7 @@ defineEmits(['update:modelValue']);
             :placeholder="field.placeholder"
             :value="modelValue"
             @input="$emit('update:modelValue', $event.target.value)"
-            class="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+            class="input"
         />
 
         <textarea
@@ -28,7 +28,7 @@ defineEmits(['update:modelValue']);
             :value="modelValue"
             @input="$emit('update:modelValue', $event.target.value)"
             rows="4"
-            class="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+            class="input"
         />
 
         <input
@@ -39,7 +39,7 @@ defineEmits(['update:modelValue']);
             :placeholder="field.placeholder"
             :value="modelValue"
             @input="$emit('update:modelValue', $event.target.value)"
-            class="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+            class="input"
         />
 
         <input
@@ -47,34 +47,39 @@ defineEmits(['update:modelValue']);
             type="date"
             :value="modelValue"
             @input="$emit('update:modelValue', $event.target.value)"
-            class="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+            class="input"
         />
 
         <select
             v-else-if="field.type === 'select'"
             :value="modelValue"
             @change="$emit('update:modelValue', $event.target.value)"
-            class="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border bg-white"
+            class="input"
         >
             <option value="">— select —</option>
             <option v-for="o in field.options" :key="o.id ?? o.value" :value="o.value">{{ o.label }}</option>
         </select>
 
-        <label v-else-if="field.type === 'checkbox'" class="inline-flex items-center gap-2">
+        <label v-else-if="field.type === 'checkbox'" class="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-ink-200 bg-white cursor-pointer hover:bg-ink-50 transition">
             <input
                 type="checkbox"
                 :checked="!!modelValue"
                 @change="$emit('update:modelValue', $event.target.checked)"
-                class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                class="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
             />
-            <span class="text-sm text-slate-700">Yes</span>
+            <span class="text-sm text-ink-700">{{ modelValue ? 'Yes' : 'No' }}</span>
         </label>
 
         <input
             v-else-if="field.type === 'file'"
             type="file"
+            accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp,.csv,.txt,.xlsx,.xls,.pdf,image/*"
             @change="$emit('update:modelValue', $event.target.files[0] || null)"
-            class="block w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white hover:file:bg-indigo-700"
+            class="block w-full text-sm text-ink-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3.5 file:py-2 file:text-white file:font-medium hover:file:bg-brand-700"
         />
+
+        <p v-if="field.placeholder && (field.type === 'select' || field.type === 'date' || field.type === 'checkbox' || field.type === 'file')" class="text-xs muted mt-1">
+            {{ field.placeholder }}
+        </p>
     </div>
 </template>

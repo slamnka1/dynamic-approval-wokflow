@@ -5,20 +5,14 @@ namespace App\Repositories\Decorators;
 use App\Domain\Contracts\FormRepositoryInterface;
 use App\Domain\DTOs\CreateFormDTO;
 use App\Models\Form;
-use Illuminate\Contracts\Cache\Repository as Cache;
+use App\Support\FormCache;
 use Illuminate\Support\Collection;
 
 class CachedFormRepository implements FormRepositoryInterface
 {
-    private const TTL = 600;
-
-    private const KEY_ACTIVE_LIST = 'forms:active:list';
-
-    private const KEY_SHOW = 'forms:show:';
-
     public function __construct(
         private readonly FormRepositoryInterface $inner,
-        private readonly Cache $cache,
+        private readonly FormCache $cache,
     ) {}
 
     public function allForAdmin(): Collection
@@ -28,34 +22,36 @@ class CachedFormRepository implements FormRepositoryInterface
 
     public function listActive(): Collection
     {
-        return $this->cache->remember(
-            self::KEY_ACTIVE_LIST,
-            self::TTL,
-            fn () => $this->inner->listActive(),
-        );
+        return $this->inner->listActive();
     }
 
     public function find(int $id): ?Form
     {
-        return $this->cache->remember(
-            self::KEY_SHOW.$id,
-            self::TTL,
-            fn () => $this->inner->find($id),
-        );
+        if ($cached = $this->cache->get($id)) {
+            return $cached;
+        }
+
+        $form = $this->inner->find($id);
+
+        if ($form) {
+            $this->cache->put($id, $form);
+        }
+
+        return $form;
     }
 
     public function create(CreateFormDTO $dto, int $creatorId): Form
     {
-        $form = $this->inner->create($dto, $creatorId);
-        $this->bust($form->id);
+        $created = $this->inner->create($dto, $creatorId);
+        $this->refresh($created->id);
 
-        return $form;
+        return $created;
     }
 
     public function update(Form $form, CreateFormDTO $dto): Form
     {
         $updated = $this->inner->update($form, $dto);
-        $this->bust($updated->id);
+        $this->refresh($updated->id);
 
         return $updated;
     }
@@ -64,12 +60,20 @@ class CachedFormRepository implements FormRepositoryInterface
     {
         $id = $form->id;
         $this->inner->delete($form);
-        $this->bust($id);
+        $this->cache->forget($id);
     }
 
-    private function bust(int $formId): void
+    /**
+     * Re-fetch the form fully eager-loaded and write it through.
+     */
+    private function refresh(int $formId): void
     {
-        $this->cache->forget(self::KEY_ACTIVE_LIST);
-        $this->cache->forget(self::KEY_SHOW.$formId);
+        $this->cache->forget($formId);
+
+        $fresh = $this->inner->find($formId);
+
+        if ($fresh) {
+            $this->cache->put($formId, $fresh);
+        }
     }
 }

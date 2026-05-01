@@ -121,7 +121,7 @@ const isActive = (name) => route.name === name || route.name?.startsWith(name + 
         <div class="fixed bottom-5 right-5 space-y-2 z-50">
             <div
                 v-for="t in ui.toasts" :key="t.id"
-                class="animate-fade-in-up flex items-start gap-3 pl-4 pr-5 py-3 rounded-xl shadow-[var(--shadow-pop)] text-sm bg-white border min-w-[260px] max-w-sm"
+                class="animate-fade-in-up flex items-start gap-3 pl-4 pr-5 py-3 rounded-xl shadow-lg text-sm bg-white border min-w-[260px] max-w-sm"
                 :class="t.type === 'success' ? 'border-emerald-200' : t.type === 'error' ? 'border-rose-200' : 'border-ink-200'"
             >
                 <span class="mt-0.5">

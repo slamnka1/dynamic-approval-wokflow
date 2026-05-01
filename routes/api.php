@@ -29,10 +29,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:approver')->prefix('approvals')->group(function () {
         Route::get('pending', [ApprovalController::class, 'pending']);
         Route::get('past', [ApprovalController::class, 'past']);
-        Route::get('{approvalRequest}', [ApprovalController::class, 'show']);
         Route::post('{approvalRequest}/approve', [ApprovalController::class, 'approve']);
         Route::post('{approvalRequest}/reject', [ApprovalController::class, 'reject']);
     });
+
+    // Show is open to admins, the requester, and assigned approvers — gated inside controller.
+    // Declared after the role:approver group so the literal `pending`/`past` routes win.
+    Route::get('approvals/{approvalRequest}', [ApprovalController::class, 'show']);
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('users', [UserController::class, 'index']);
